@@ -1,7 +1,5 @@
 IP: 158.160.22.151;
 name_taski: https://pyssybali.ddns.net/;
 name_kittygram: https://kittygram-yandex.ddns.net/;
-login_taski: Kirill;
-password_taski: 073820;
-login_kittygram: admin;
-password_kittygram: 073820;
+login: admin;
+password: 073820;
