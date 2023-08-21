@@ -1,9 +1,9 @@
 # Kittygram
-### Если вы любите делиться котиками, то вы на правильном пути.
-Данный проект позволяет авторизованным пользователям публиковать фото с именами и данными вашего любимого питомца. 
+Если вы любите делиться котиками, то вы на правильном пути. Данный проект позволяет авторизованным пользователям публиковать фото с именами и данными вашего любимого питомца. 
 
 ##  Установка и настройка проекта
 **(Данное описание подразумевает, что на вашем сервере установлен Git, пакетный менеджер npm, создана ветка на репозиторий infra_sprint1)**
+### Подготовка сервера к установке проекта
 - Склонируйте проект из репозитория
 - Настройте виртуальное окружение
 - Установите пакеты из файла requirements.txt
@@ -21,33 +21,19 @@ python manage.py createsuperuser
 **DEBUG=False**
 **ALLOWED_HOSTS=<YOUR_SERVER_IP_ADDRESS> localhost  <YOUR_DOMAIN_NAME>**
 
-## Запуск Фронта
+### Запуск Фронта
 - Установите зависимости фронтенд-приложения из директории /frontend/
 - Запустите приложение
 ```
 npm i
 npm run start
 ```
-## Установка и запуск Gunicorn
+### Запуск бэкенда. Установка и запуск Gunicorn
  - На удаленном сервере при активированном виртуальном окружении проекта установите пакет Gunicorn
- - В директории /etc/systemd/system/ создайте файл gunicorn_kittygram.service
-```
+ - Cооздайте линк из файла конфига в системную директорию
+ ```
 pip install gunicorn==20.1.0
-sudo nano /etc/systemd/system/gunicorn_kittygram.service
-```
-В файле gunicorn-kittygram.service опишите конфигурацию процесса:
-```
-[Unit]
-Description=gunicorn daemon 
-After=network.target 
-
-[Service]
-User=yc-user
-WorkingDirectory=/home/yc-user/infra_sprint1/backend/
-ExecStart=/home/yc-user/infra_sprint1/backend/venv/bin/gunicorn --bind 0.0.0.0:8080 kittygram_backend.wsgi
-
-[Install]
-WantedBy=multi-user.target 
+ln -s /home/yc-user/infra_sprint1/infra/gunicorn_kittygram.service /etc/systemd/system/gunicorn_kittygram.service
 ```
 - Запустите процесс gunicorn_kittygram.service
 - Добавьте процесс в автозапуск
@@ -55,7 +41,7 @@ WantedBy=multi-user.target
 sudo systemctl start gunicorn_kittygram.service
 sudo systemctl enable gunicorn_kittygram.service
 ```
-## Установка и запуск Nginx
+### Настройка веб-сервера. Установка и запуск Nginx
 - На удаленном сервере при активированном виртуальном окружении проекта установите Nginx
 - Далее сервер, скорее всего, попросит вас перезагрузить операционную систему — сделайте это. А потом запустите Nginx
 ```
@@ -68,42 +54,18 @@ sudo ufw allow 'Nginx Full'
 sudo ufw allow OpenSSH
 sudo ufw enable
 ```
-## Настройка Nginx
+### Настройка Nginx
 - Запустите сборку фронтенд-приложения из директории ./frontend
 - Скопируйте в содержимое директории /home/yc-user/infra_sprint1/frontend/build/. в директорию /var/www/kittygram/ 
 ```
 npm run build
 sudo cp -r build/. /var/www/kittygram/
 ```  
-- Откройте файл конфигурации веб-сервера и опишите настройки для работы со статикой фронтенд-приложения
-```shell
-sudo nano /etc/nginx/sites-enabled/default
+- Cооздайте линк из файла конфига в системную директорию
+- Отредактируйте файл конфига */home/yc-user/infra_sprint1/infra/default* в соответвии с вашим IP-адресом и доменом
+```
+ln -s /home/yc-user/infra_sprint1/infra/default /etc/nginx/sites-enabled/default
 ```  
-- Удалите все настройки из файла, запишите и сохраните новые
-```
-server {
-    server_name YOUR_IP YOUR_DOMAIN;
-    location /api/ {
-        proxy_pass http://127.0.0.1:8080;
-        client_max_body_size 20M;
-    }
-
-    location /admin/ {
-        proxy_pass http://127.0.0.1:8080;
-        client_max_body_size 20M;
-    }
-
-    location /media/ {
-        root /var/www/kittygram;
-    }
-
-    location / {
-        root   /var/www/kittygram;
-        index  index.html index.htm;
-        try_files $uri /index.html;
-    }
-}
-```
 - Перезагрузите конфигурацию Nginx
 ```
 sudo systemctl reload nginx
@@ -113,7 +75,7 @@ sudo systemctl reload nginx
 python manage.py collectstatic
 sudo cp -r /home/yc-user/infra_sprint1/backend/static_backend/ /var/www/kittygram/ 
 ```
-## Получение и настройка SSL-сертификата
+### Безопасность. Получение и настройка SSL-сертификата
 - Установите certbot на ваш удалённый сервер
 - Запустите certbot и получите SSL-сертификат под веб-сервер Nginx
 ```
